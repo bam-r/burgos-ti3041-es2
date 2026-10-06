@@ -1,0 +1,173 @@
+.miniatura {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.imagen-detalle {
+    max-width: 400px;
+    width: 100%;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.sin-stock {
+    opacity: 0.6;
+}
+
+.etiqueta-sin-stock {
+    color: #b00020;
+    font-weight: bold;
+}
+
+.catalogo-layout {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.catalogo-principal {
+    flex: 1;
+    min-width: 0;
+}
+
+.carrito {
+    width: 260px;
+    flex-shrink: 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+    position: sticky;
+    top: 1rem;
+}
+
+.carrito-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.carrito-lista li {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.carrito-mini {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.carrito-nombre {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.carrito-cantidad {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #555;
+}
+
+.btn-comprar {
+    background: #2e7d32;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-comprar:disabled {
+    background: #999;
+    cursor: not-allowed;
+}
+
+.barra-usuario {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f0f0f0;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.login-caja {
+    max-width: 320px;
+    margin: 3rem auto;
+    text-align: center;
+}
+
+.login-caja form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.login-caja input {
+    padding: 0.5rem;
+    font-size: 1rem;
+}
+
+.login-error {
+    color: #b00020;
+}
+
+.login-ayuda {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 1rem;
+}
+
+.celda-acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 140px;
+}
+
+.acciones-admin {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    border-top: 1px dashed #ccc;
+    padding-top: 0.4rem;
+}
+
+.btn-admin {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+}
+
+.btn-retirar { background: #e65100; }
+.btn-reactivar { background: #1565c0; }
+.btn-stock { background: #6a1b9a; }
+
+.form-stock {
+    display: flex;
+    gap: 0.3rem;
+}
+
+.input-stock {
+    width: 50px;
+}
+
+.retirado {
+    opacity: 0.6;
+}
+
+.etiqueta-retirado {
+    font-size: 0.75rem;
+    color: #e65100;
+    font-weight: bold;
+}
