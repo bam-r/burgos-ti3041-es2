@@ -52,3 +52,60 @@ class ProductoAdminCRUDTests(TestCase):
 		response = self.client.post(delete_url, {'post': 'yes'})
 		self.assertEqual(response.status_code, 302)
 		self.assertFalse(Producto.objects.filter(pk=producto.pk).exists())
+
+
+class CatalogoDatabaseViewsTests(TestCase):
+	def setUp(self):
+		from . import views
+
+		views.carrito.clear()
+		self.producto = Producto.objects.create(
+			nombre='Producto solo en SQLite',
+			categoria='Pruebas',
+			precio=2500,
+			stock=5,
+			imagen='/static/catalogo/img/sin-imagen.jpg',
+			activo=True,
+		)
+		self.client.cookies['nombre_usuario'] = 'cliente'
+		self.client.cookies['rol_usuario'] = 'cliente'
+
+	def tearDown(self):
+		from . import views
+
+		views.carrito.clear()
+
+	def test_lista_y_detalle_leen_productos_de_la_base_de_datos(self):
+		response = self.client.get(reverse('lista'))
+		self.assertContains(response, 'Producto solo en SQLite')
+
+		response = self.client.get(reverse('detalle', args=[self.producto.pk]))
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, 'Producto solo en SQLite')
+
+	def test_compra_y_acciones_admin_actualizan_la_base_de_datos(self):
+		self.client.cookies['nombre_usuario'] = 'admin'
+		self.client.cookies['rol_usuario'] = 'admin'
+
+		response = self.client.post(reverse('comprar', args=[self.producto.pk]))
+		self.assertEqual(response.status_code, 302)
+		self.producto.refresh_from_db()
+		self.assertEqual(self.producto.stock, 4)
+
+		response = self.client.post(
+			reverse('agregar_stock', args=[self.producto.pk]),
+			{'cantidad': '3'},
+		)
+		self.assertEqual(response.status_code, 302)
+		self.producto.refresh_from_db()
+		self.assertEqual(self.producto.stock, 7)
+
+		response = self.client.post(reverse('retirar', args=[self.producto.pk]))
+		self.assertEqual(response.status_code, 302)
+		self.producto.refresh_from_db()
+		self.assertFalse(self.producto.activo)
+
+		response = self.client.post(reverse('reactivar', args=[self.producto.pk]))
+		self.assertEqual(response.status_code, 302)
+		self.producto.refresh_from_db()
+		self.assertTrue(self.producto.activo)

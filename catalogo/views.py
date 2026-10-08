@@ -1,35 +1,19 @@
-import json
-from pathlib import Path
-
+from django.db.models import F
 from django.http import Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 
-DATA_PATH = Path(__file__).resolve().parent / 'data' / 'productos.json'
+from .models import Producto
 
 carrito = {}  # {id_producto: cantidad} — en memoria, sin sesión ni base de datos
 
 
-def cargar_productos():
-    with open(DATA_PATH, encoding='utf-8') as archivo:
-        productos = json.load(archivo)
-    for p in productos:
-        p.setdefault('imagen', '/static/catalogo/img/sin-imagen.jpg')
-        p.setdefault('activo', True)
-    return productos
-
-
-def guardar_productos(productos):
-    with open(DATA_PATH, 'w', encoding='utf-8') as archivo:
-        json.dump(productos, archivo, ensure_ascii=False, indent=2)
-
-
-def obtener_carrito(productos):
-    items = []
-    for producto_id, cantidad in carrito.items():
-        producto = next((p for p in productos if p['id'] == producto_id), None)
-        if producto:
-            items.append({'producto': producto, 'cantidad': cantidad})
-    return items
+def obtener_carrito():
+    productos = Producto.objects.in_bulk(carrito)
+    return [
+        {'producto': productos[producto_id], 'cantidad': cantidad}
+        for producto_id, cantidad in carrito.items()
+        if producto_id in productos
+    ]
 
 
 def usuario_actual(request):
@@ -67,15 +51,12 @@ def lista(request):
     if usuario is None:
         return redirect('login')
 
-    productos = cargar_productos()
+    productos_visibles = Producto.objects.all()
+    if usuario['rol'] != 'admin':
+        productos_visibles = productos_visibles.filter(activo=True)
 
-    if usuario['rol'] == 'admin':
-        productos_visibles = productos
-    else:
-        productos_visibles = [p for p in productos if p['activo']]
-
-    total_productos = len(productos_visibles)
-    disponibles = sum(1 for p in productos_visibles if p['stock'] > 0)
+    total_productos = productos_visibles.count()
+    disponibles = productos_visibles.filter(stock__gt=0).count()
 
     resumen = {
         'total': total_productos,
@@ -86,7 +67,7 @@ def lista(request):
     contexto = {
         'productos': productos_visibles,
         'resumen': resumen,
-        'carrito': obtener_carrito(productos),
+        'carrito': obtener_carrito(),
         'usuario': usuario,
     }
     return render(request, 'catalogo/lista.html', contexto)
@@ -97,21 +78,17 @@ def detalle(request, producto_id):
     if usuario is None:
         return redirect('login')
 
-    productos = cargar_productos()
-    producto = next((p for p in productos if p['id'] == producto_id), None)
+    producto = get_object_or_404(Producto, pk=producto_id)
 
-    if producto is None:
-        raise Http404("El producto solicitado no existe en el catálogo.")
-
-    if not producto['activo'] and usuario['rol'] != 'admin':
+    if not producto.activo and usuario['rol'] != 'admin':
         raise Http404("El producto solicitado no existe en el catálogo.")
 
     contexto = {
         'producto': producto,
-        'carrito': obtener_carrito(productos),
+        'carrito': obtener_carrito(),
         'usuario': usuario,
     }
-    return render(request, 'catalogo/detalle.html', contexto)
+    return render(request, 'detalles.html', contexto)
 
 
 def comprar(request, producto_id):
@@ -119,16 +96,16 @@ def comprar(request, producto_id):
     if usuario is None:
         return redirect('login')
 
-    productos = cargar_productos()
-    producto = next((p for p in productos if p['id'] == producto_id), None)
+    producto = get_object_or_404(Producto, pk=producto_id)
 
-    if producto is None:
-        raise Http404("El producto solicitado no existe en el catálogo.")
-
-    if request.method == 'POST' and producto['activo'] and producto['stock'] > 0:
-        producto['stock'] -= 1
-        guardar_productos(productos)
-        carrito[producto_id] = carrito.get(producto_id, 0) + 1
+    if request.method == 'POST':
+        actualizado = Producto.objects.filter(
+            pk=producto.pk,
+            activo=True,
+            stock__gt=0,
+        ).update(stock=F('stock') - 1)
+        if actualizado:
+            carrito[producto_id] = carrito.get(producto_id, 0) + 1
 
     return redirect(request.META.get('HTTP_REFERER', 'lista'))
 
@@ -138,15 +115,11 @@ def retirar(request, producto_id):
     if usuario is None or usuario['rol'] != 'admin':
         return redirect('login')
 
-    productos = cargar_productos()
-    producto = next((p for p in productos if p['id'] == producto_id), None)
-
-    if producto is None:
-        raise Http404("El producto solicitado no existe en el catálogo.")
+    producto = get_object_or_404(Producto, pk=producto_id)
 
     if request.method == 'POST':
-        producto['activo'] = False
-        guardar_productos(productos)
+        producto.activo = False
+        producto.save(update_fields=['activo'])
 
     return redirect(request.META.get('HTTP_REFERER', 'lista'))
 
@@ -156,15 +129,11 @@ def reactivar(request, producto_id):
     if usuario is None or usuario['rol'] != 'admin':
         return redirect('login')
 
-    productos = cargar_productos()
-    producto = next((p for p in productos if p['id'] == producto_id), None)
-
-    if producto is None:
-        raise Http404("El producto solicitado no existe en el catálogo.")
+    producto = get_object_or_404(Producto, pk=producto_id)
 
     if request.method == 'POST':
-        producto['activo'] = True
-        guardar_productos(productos)
+        producto.activo = True
+        producto.save(update_fields=['activo'])
 
     return redirect(request.META.get('HTTP_REFERER', 'lista'))
 
@@ -174,11 +143,7 @@ def agregar_stock(request, producto_id):
     if usuario is None or usuario['rol'] != 'admin':
         return redirect('login')
 
-    productos = cargar_productos()
-    producto = next((p for p in productos if p['id'] == producto_id), None)
-
-    if producto is None:
-        raise Http404("El producto solicitado no existe en el catálogo.")
+    producto = get_object_or_404(Producto, pk=producto_id)
 
     if request.method == 'POST':
         try:
@@ -186,7 +151,6 @@ def agregar_stock(request, producto_id):
         except ValueError:
             cantidad = 0
         if cantidad > 0:
-            producto['stock'] += cantidad
-            guardar_productos(productos)
+            Producto.objects.filter(pk=producto.pk).update(stock=F('stock') + cantidad)
 
     return redirect(request.META.get('HTTP_REFERER', 'lista'))
