@@ -4,15 +4,16 @@
 
 {% block contenido %}
     <div class="login-caja">
-        <h2>Ingresa tu nombre</h2>
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🔧</div>
+        <h2>¿Cómo te llamas?</h2>
         {% if error %}
             <p class="login-error">{{ error }}</p>
         {% endif %}
         <form method="post">
             {% csrf_token %}
             <input type="text" name="usuario" placeholder="Tu nombre" required autofocus>
-            <button type="submit">Entrar</button>
+            <button type="submit">Acceder 🚀</button>
         </form>
-        <p class="login-ayuda">Ingresa "admin" para entrar como administrador.</p>
+        <p class="login-ayuda">💬 Ingresa <strong>"admin"</strong> para entrar como administrador</p>
     </div>
 {% endblock %}

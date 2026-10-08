@@ -3,12 +3,120 @@
 {% block titulo %}{{ producto.nombre }}{% endblock %}
 
 {% block contenido %}
-    <a href="{% url 'lista' %}">&larr; Volver al catálogo</a>
-    <h2>{{ producto.nombre }}</h2>
-    <img src="{{ producto.imagen }}" alt="{{ producto.nombre }}"
-         class="imagen-detalle"
-         onerror="this.src='/static/catalogo/img/sin-imagen.jpg'">
-    <p><strong>Categoría:</strong> {{ producto.categoria }}</p>
-    <p><strong>Precio:</strong> ${{ producto.precio }}</p>
-    <p><strong>Stock:</strong> {{ producto.stock }}</p>
+    <style>
+        .detalle-container {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            max-width: 700px;
+        }
+
+        .detalle-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 1rem;
+        }
+
+        .detalle-header a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .detalle-header h2 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .detalle-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .detalle-imagen {
+            text-align: center;
+        }
+
+        .detalle-info p {
+            margin: 1rem 0;
+            font-size: 1.05rem;
+        }
+
+        .detalle-info strong {
+            color: var(--secondary);
+            font-weight: 600;
+        }
+
+        .precio-detalle {
+            font-size: 2rem;
+            color: var(--primary);
+            font-weight: 700;
+            margin: 1.5rem 0;
+        }
+
+        .stock-detalle {
+            display: inline-block;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        .stock-disponible {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .stock-agotado {
+            background-color: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        @media (max-width: 600px) {
+            .detalle-container {
+                padding: 1.5rem;
+            }
+
+            .detalle-content {
+                grid-template-columns: 1fr;
+            }
+
+            .detalle-header h2 {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+
+    <div class="detalle-container">
+        <div class="detalle-header">
+            <a href="{% url 'lista' %}">← Volver al catálogo</a>
+        </div>
+
+        <div class="detalle-content">
+            <div class="detalle-imagen">
+                <img src="{{ producto.imagen }}" alt="{{ producto.nombre }}"
+                     class="imagen-detalle"
+                     onerror="this.src='/static/catalogo/img/sin-imagen.jpg'">
+            </div>
+
+            <div class="detalle-info">
+                <h2>{{ producto.nombre }}</h2>
+                <p><strong>📂 Categoría:</strong> {{ producto.categoria }}</p>
+                <div class="precio-detalle">💰 ${{ producto.precio }}</div>
+                <p>
+                    {% if producto.stock == 0 %}
+                        <span class="stock-detalle stock-agotado">📭 Sin stock</span>
+                    {% else %}
+                        <span class="stock-detalle stock-disponible">✅ Disponible ({{ producto.stock }} unidades)</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
 {% endblock %}

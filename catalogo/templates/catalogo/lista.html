@@ -4,95 +4,109 @@
 
 {% block contenido %}
     <div class="barra-usuario">
-        <span>Conectado como <strong>{{ usuario.nombre }}</strong>
-            {% if usuario.rol == 'admin' %}(administrador){% endif %}</span>
-        <a href="{% url 'logout' %}">Cerrar sesión</a>
+        <span>👤 Conectado como <strong>{{ usuario.nombre }}</strong>
+            {% if usuario.rol == 'admin' %}<span style="color: #ea7f28; margin-left: 8px;">👨‍💼 administrador</span>{% endif %}</span>
+        <a href="{% url 'logout' %}">🚪 Cerrar sesión</a>
     </div>
 
-    <h2>Nuestros productos</h2>
+    <style>
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 2rem 0 1.5rem 0;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 1rem;
+        }
+    </style>
+
+    <h2>📦 Nuestro Catálogo</h2>
 
     <section class="resumen">
-        <p><strong>Total de productos:</strong> {{ resumen.total }}</p>
-        <p><strong>Disponibles:</strong> {{ resumen.disponibles }}</p>
-        <p><strong>Sin stock:</strong> {{ resumen.sin_stock }}</p>
+        <div class="resumen-item">
+            <strong>{{ resumen.total }}</strong>
+            <p>Productos Totales</p>
+        </div>
+        <div class="resumen-item">
+            <strong>{{ resumen.disponibles }}</strong>
+            <p>Disponibles</p>
+        </div>
+        <div class="resumen-item">
+            <strong>{{ resumen.sin_stock }}</strong>
+            <p>Sin Stock</p>
+        </div>
     </section>
 
     <div class="catalogo-layout">
         <div class="catalogo-principal">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Imagen</th>
-                        <th>Nombre</th>
-                        <th>Categoría</th>
-                        <th>Precio</th>
-                        <th>Stock</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for producto in productos %}
-                    <tr class="{% if producto.stock == 0 %}sin-stock{% endif %} {% if not producto.activo %}retirado{% endif %}">
-                        <td>
-                            <img src="{{ producto.imagen }}" alt="{{ producto.nombre }}"
-                                 class="miniatura"
-                                 onerror="this.src='/static/catalogo/img/sin-imagen.jpg'">
-                        </td>
-                        <td>
+            <div class="productos-grid">
+                {% for producto in productos %}
+                <div class="producto-card {% if producto.stock == 0 %}sin-stock{% endif %}">
+                    <img src="{{ producto.imagen }}" alt="{{ producto.nombre }}"
+                         class="producto-imagen"
+                         onerror="this.src='/static/catalogo/img/sin-imagen.jpg'">
+                    
+                    <div class="producto-body">
+                        <div class="producto-categoria">{{ producto.categoria }}</div>
+                        <h3 class="producto-nombre">
                             <a href="{% url 'detalle' producto.id %}">{{ producto.nombre }}</a>
                             {% if not producto.activo %}<br><span class="etiqueta-retirado">Retirado</span>{% endif %}
-                        </td>
-                        <td>{{ producto.categoria }}</td>
-                        <td>${{ producto.precio }}</td>
-                        <td>
+                        </h3>
+                        
+                        <div class="producto-precio">💰 ${{ producto.precio }}</div>
+                        
+                        <div class="producto-stock-info">
                             {% if producto.stock == 0 %}
-                                <span class="etiqueta-sin-stock">Sin stock</span>
+                                <span class="etiqueta-sin-stock">📭 Sin stock</span>
                             {% else %}
-                                {{ producto.stock }}
+                                <strong>✅ Disponible:</strong> {{ producto.stock }} unidades
                             {% endif %}
-                        </td>
-                        <td class="celda-acciones">
-                            {% if producto.activo and producto.stock > 0 %}
-                                <form method="post" action="{% url 'comprar' producto.id %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn-comprar">Comprar</button>
-                                </form>
-                            {% else %}
-                                <button class="btn-comprar" disabled>
-                                    {% if not producto.activo %}Retirado{% else %}Agotado{% endif %}
-                                </button>
-                            {% endif %}
-
+                        </div>
+                        
+                        <div class="producto-footer">
+                            <div class="producto-action-principal">
+                                {% if producto.activo and producto.stock > 0 %}
+                                    <form method="post" action="{% url 'comprar' producto.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-comprar">🛒 Comprar</button>
+                                    </form>
+                                {% else %}
+                                    <button class="btn-comprar" disabled>
+                                        {% if not producto.activo %}❌ Retirado{% else %}📭 Agotado{% endif %}
+                                    </button>
+                                {% endif %}
+                            </div>
+                            
                             {% if usuario.rol == 'admin' %}
-                                <div class="acciones-admin">
+                                <div class="producto-acciones-admin">
                                     {% if producto.activo %}
                                         <form method="post" action="{% url 'retirar' producto.id %}">
                                             {% csrf_token %}
-                                            <button type="submit" class="btn-admin btn-retirar">Retirar</button>
+                                            <button type="submit" class="btn-admin btn-retirar">🗑️ Retirar</button>
                                         </form>
                                     {% else %}
                                         <form method="post" action="{% url 'reactivar' producto.id %}">
                                             {% csrf_token %}
-                                            <button type="submit" class="btn-admin btn-reactivar">Reactivar</button>
+                                            <button type="submit" class="btn-admin btn-reactivar">♻️ Reactivar</button>
                                         </form>
                                     {% endif %}
 
                                     <form method="post" action="{% url 'agregar_stock' producto.id %}" class="form-stock">
                                         {% csrf_token %}
-                                        <input type="number" name="cantidad" min="1" value="5" class="input-stock">
-                                        <button type="submit" class="btn-admin btn-stock">+ Stock</button>
+                                        <input type="number" name="cantidad" min="1" value="5" class="input-stock" placeholder="+5">
+                                        <button type="submit" class="btn-admin btn-stock">➕ Stock</button>
                                     </form>
                                 </div>
                             {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
 
         <aside class="carrito">
-            <h3>🛒 Carrito</h3>
+            <h3>🛒 Tu Carrito</h3>
             {% if carrito %}
                 <ul class="carrito-lista">
                     {% for item in carrito %}
@@ -100,13 +114,13 @@
                             <img src="{{ item.producto.imagen }}" alt="{{ item.producto.nombre }}" class="carrito-mini">
                             <div>
                                 <p class="carrito-nombre">{{ item.producto.nombre }}</p>
-                                <p class="carrito-cantidad">Cantidad: {{ item.cantidad }}</p>
+                                <p class="carrito-cantidad">Cantidad: <strong style="color: var(--primary);">{{ item.cantidad }}</strong></p>
                             </div>
                         </li>
                     {% endfor %}
                 </ul>
             {% else %}
-                <p>Aún no has agregado productos.</p>
+                <p style="text-align: center; color: var(--gray); padding: 1rem 0;">📦 Tu carrito está vacío</p>
             {% endif %}
         </aside>
     </div>
